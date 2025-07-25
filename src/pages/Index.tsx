@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { AudioUploader } from '@/components/AudioUploader';
 import { SphereViewer } from '@/components/SphereViewer';
 import { ResultsPanel } from '@/components/ResultsPanel';
+import { audioAnalysisApi } from '@/services/audioAnalysisApi';
+import { useToast } from '@/hooks/use-toast';
 
 export interface ClassificationResult {
   label: string;
@@ -18,6 +20,7 @@ export interface AudioAnalysisResult {
 }
 
 const Index = () => {
+  const { toast } = useToast();
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AudioAnalysisResult | null>(null);
@@ -25,61 +28,59 @@ const Index = () => {
   const handleFileUpload = async (file: File) => {
     setAudioFile(file);
     setIsLoading(true);
+    setResults(null);
     
-    // Multiple dummy scenarios for testing
-    const dummyScenarios: AudioAnalysisResult[] = [
-      {
-        azimuth: 269.65,
-        elevation: 4.18,
-        classification: [
-          { label: "Chicken, rooster", score: 0.691 },
-          { label: "Fowl", score: 0.145 },
-          { label: "Cluck", score: 0.111 },
-        ],
-        transcript: null,
-        filename: file.name
-      },
-      {
-        azimuth: 45.2,
-        elevation: -12.5,
-        classification: [
-          { label: "Dog", score: 0.823 },
-          { label: "Animal", score: 0.156 },
-          { label: "Bark", score: 0.124 },
-        ],
-        transcript: null,
-        filename: file.name
-      },
-      {
-        azimuth: 180.0,
-        elevation: 30.0,
-        classification: [
-          { label: "Speech", score: 0.892 },
-          { label: "Male speech", score: 0.234 },
-          { label: "Conversation", score: 0.187 },
-        ],
-        transcript: "Hello, this is a test speech transcription to demonstrate how the UI handles longer text content.",
-        filename: file.name
-      },
-      {
-        azimuth: 90.0,
-        elevation: -45.0,
-        classification: [
-          { label: "Car", score: 0.756 },
-          { label: "Vehicle", score: 0.198 },
-          { label: "Motor", score: 0.134 },
-        ],
-        transcript: null,
-        filename: file.name
+    try {
+      // Check if backend is available
+      const isHealthy = await audioAnalysisApi.checkHealth();
+      
+      if (!isHealthy) {
+        // Fallback to mock data if backend is not available
+        toast({
+          title: "Backend not available",
+          description: "Using demo data. Deploy your Python backend to process real files.",
+          variant: "destructive",
+        });
+        
+        // Use mock data as fallback
+        const mockResult: AudioAnalysisResult = {
+          azimuth: 269.65,
+          elevation: 4.18,
+          classification: [
+            { label: "Chicken, rooster", score: 0.691 },
+            { label: "Fowl", score: 0.145 },
+            { label: "Cluck", score: 0.111 },
+          ],
+          transcript: null,
+          filename: file.name
+        };
+        
+        setTimeout(() => {
+          setResults(mockResult);
+          setIsLoading(false);
+        }, 2000);
+        return;
       }
-    ];
-    
-    // Simulate API call - randomly select a scenario for testing
-    setTimeout(() => {
-      const randomScenario = dummyScenarios[Math.floor(Math.random() * dummyScenarios.length)];
-      setResults(randomScenario);
+
+      // Use real API
+      const result = await audioAnalysisApi.analyzeAudio(file);
+      setResults(result);
+      
+      toast({
+        title: "Analysis complete",
+        description: "Audio file processed successfully.",
+      });
+      
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      toast({
+        title: "Analysis failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleReset = () => {
