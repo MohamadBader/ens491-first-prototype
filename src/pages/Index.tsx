@@ -26,9 +26,9 @@ const Index = () => {
     setAudioFile(file);
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const mockResults: AudioAnalysisResult = {
+    // Multiple dummy scenarios for testing
+    const dummyScenarios: AudioAnalysisResult[] = [
+      {
         azimuth: 269.65,
         elevation: 4.18,
         classification: [
@@ -38,8 +38,46 @@ const Index = () => {
         ],
         transcript: null,
         filename: file.name
-      };
-      setResults(mockResults);
+      },
+      {
+        azimuth: 45.2,
+        elevation: -12.5,
+        classification: [
+          { label: "Dog", score: 0.823 },
+          { label: "Animal", score: 0.156 },
+          { label: "Bark", score: 0.124 },
+        ],
+        transcript: null,
+        filename: file.name
+      },
+      {
+        azimuth: 180.0,
+        elevation: 30.0,
+        classification: [
+          { label: "Speech", score: 0.892 },
+          { label: "Male speech", score: 0.234 },
+          { label: "Conversation", score: 0.187 },
+        ],
+        transcript: "Hello, this is a test speech transcription to demonstrate how the UI handles longer text content.",
+        filename: file.name
+      },
+      {
+        azimuth: 90.0,
+        elevation: -45.0,
+        classification: [
+          { label: "Car", score: 0.756 },
+          { label: "Vehicle", score: 0.198 },
+          { label: "Motor", score: 0.134 },
+        ],
+        transcript: null,
+        filename: file.name
+      }
+    ];
+    
+    // Simulate API call - randomly select a scenario for testing
+    setTimeout(() => {
+      const randomScenario = dummyScenarios[Math.floor(Math.random() * dummyScenarios.length)];
+      setResults(randomScenario);
       setIsLoading(false);
     }, 2000);
   };
