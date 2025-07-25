@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Sphere, Text, Html } from '@react-three/drei';
+import { OrbitControls, Text, Html } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { AudioAnalysisResult } from '@/pages/Index';
@@ -30,24 +30,26 @@ const Scene = ({ results }: { results: AudioAnalysisResult | null }) => {
       <pointLight position={[10, 10, 10]} intensity={1} />
       
       {/* Main transparent sphere */}
-      <Sphere args={[3, 64, 64]}>
+      <mesh>
+        <sphereGeometry args={[3, 64, 64]} />
         <meshPhongMaterial 
           color="#8b5cf6" 
           transparent 
           opacity={0.1} 
           wireframe={false}
         />
-      </Sphere>
+      </mesh>
       
       {/* Wireframe sphere for reference */}
-      <Sphere args={[3, 32, 32]}>
+      <mesh>
+        <sphereGeometry args={[3, 32, 32]} />
         <meshBasicMaterial 
           color="#8b5cf6" 
           transparent 
           opacity={0.2} 
           wireframe={true}
         />
-      </Sphere>
+      </mesh>
       
       {/* Sound source marker */}
       {results && (
