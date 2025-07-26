@@ -104,6 +104,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
       {/* Controls based on view mode */}
       {viewMode === 'default' ? (
         <OrbitControls 
+          key="orbit-default"
           enableZoom={true}
           enablePan={true}
           enableRotate={true}
@@ -112,12 +113,16 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
         />
       ) : (
         <OrbitControls 
+          key="orbit-pov"
           enableZoom={false}
           enablePan={false}
           enableRotate={true}
           target={[0, 0, 0]}
-          minDistance={0.1}
-          maxDistance={0.1}
+          minDistance={0.01}
+          maxDistance={0.01}
+          rotateSpeed={0.3}
+          enableDamping={true}
+          dampingFactor={0.1}
         />
       )}
     </>
@@ -185,6 +190,7 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
       
       <div className="h-[calc(100%-80px)] rounded-xl overflow-hidden">
         <Canvas 
+          key={viewMode}
           camera={{ 
             position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
             fov: 60 
