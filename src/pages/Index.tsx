@@ -17,6 +17,7 @@ export interface AudioAnalysisResult {
   classification: ClassificationResult[];
   transcript: string | null;
   filename?: string;
+  warning?: string;
 }
 
 const Index = () => {
@@ -66,10 +67,21 @@ const Index = () => {
       const result = await audioAnalysisApi.analyzeAudio(file);
       setResults(result);
       
-      toast({
-        title: "Analysis complete",
-        description: "Audio file processed successfully.",
-      });
+      // Show warning toast if present
+      if (result.warning) {
+        toast({
+          title: "Audio Format Warning",
+          description: result.warning,
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Analysis complete",
+          description: "Audio file processed successfully.",
+          duration: 3000,
+        });
+      }
       
     } catch (error) {
       console.error('Analysis failed:', error);

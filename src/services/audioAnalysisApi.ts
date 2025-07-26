@@ -14,6 +14,7 @@ export interface AudioAnalysisResponse {
     score: number;
   }[];
   transcription: string | null;
+  warning?: string;
 }
 
 // Convert backend response to frontend format
@@ -26,7 +27,8 @@ const mapResponseToResult = (response: AudioAnalysisResponse, filename: string):
       score: item.score
     })),
     transcript: response.transcription,
-    filename
+    filename,
+    warning: response.warning
   };
 };
 
