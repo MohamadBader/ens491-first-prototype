@@ -1,14 +1,18 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Text, Html } from '@react-three/drei';
+import { OrbitControls, Text, Html, PointerLockControls } from '@react-three/drei';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, Navigation } from 'lucide-react';
+import { useState } from 'react';
 import { AudioAnalysisResult } from '@/pages/Index';
 import { SoundMarker } from './SoundMarker';
+import { Button } from '@/components/ui/button';
 
 interface SphereViewerProps {
   results: AudioAnalysisResult | null;
   isLoading: boolean;
 }
+
+type ViewMode = 'default' | 'inside';
 
 // Convert azimuth and elevation to 3D coordinates
 const azimuthElevationToCartesian = (azimuth: number, elevation: number, radius: number = 3): [number, number, number] => {
@@ -22,7 +26,7 @@ const azimuthElevationToCartesian = (azimuth: number, elevation: number, radius:
   return [x, y, z];
 };
 
-const Scene = ({ results }: { results: AudioAnalysisResult | null }) => {
+const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; viewMode: ViewMode }) => {
   return (
     <>
       {/* Ambient lighting */}
@@ -35,8 +39,9 @@ const Scene = ({ results }: { results: AudioAnalysisResult | null }) => {
         <meshPhongMaterial 
           color="#8b5cf6" 
           transparent 
-          opacity={0.1} 
+          opacity={viewMode === 'inside' ? 0.05 : 0.1} 
           wireframe={false}
+          side={viewMode === 'inside' ? 2 : 0} // DoubleSide when inside
         />
       </mesh>
       
@@ -46,8 +51,9 @@ const Scene = ({ results }: { results: AudioAnalysisResult | null }) => {
         <meshBasicMaterial 
           color="#8b5cf6" 
           transparent 
-          opacity={0.2} 
+          opacity={viewMode === 'inside' ? 0.1 : 0.2} 
           wireframe={true}
+          side={viewMode === 'inside' ? 2 : 0} // DoubleSide when inside
         />
       </mesh>
       
@@ -57,57 +63,102 @@ const Scene = ({ results }: { results: AudioAnalysisResult | null }) => {
           position={azimuthElevationToCartesian(results.azimuth, results.elevation)}
           soundType={results.classification[0]?.label || 'Unknown'}
           confidence={results.classification[0]?.score || 0}
+          viewMode={viewMode}
         />
       )}
       
-      {/* Coordinate system helpers */}
-      <Text
-        position={[4, 0, 0]}
-        fontSize={0.3}
-        color="#10b981"
-        anchorX="center"
-        anchorY="middle"
-      >
-        +X (East)
-      </Text>
-      <Text
-        position={[0, 4, 0]}
-        fontSize={0.3}
-        color="#10b981"
-        anchorX="center"
-        anchorY="middle"
-      >
-        +Y (Up)
-      </Text>
-      <Text
-        position={[0, 0, 4]}
-        fontSize={0.3}
-        color="#10b981"
-        anchorX="center"
-        anchorY="middle"
-      >
-        +Z (North)
-      </Text>
+      {/* Coordinate system helpers - only show in default mode */}
+      {viewMode === 'default' && (
+        <>
+          <Text
+            position={[4, 0, 0]}
+            fontSize={0.3}
+            color="#10b981"
+            anchorX="center"
+            anchorY="middle"
+          >
+            +X (East)
+          </Text>
+          <Text
+            position={[0, 4, 0]}
+            fontSize={0.3}
+            color="#10b981"
+            anchorX="center"
+            anchorY="middle"
+          >
+            +Y (Up)
+          </Text>
+          <Text
+            position={[0, 0, 4]}
+            fontSize={0.3}
+            color="#10b981"
+            anchorX="center"
+            anchorY="middle"
+          >
+            +Z (North)
+          </Text>
+        </>
+      )}
       
-      <OrbitControls 
-        enableZoom={true}
-        enablePan={true}
-        enableRotate={true}
-        minDistance={2}
-        maxDistance={10}
-      />
+      {/* Controls based on view mode */}
+      {viewMode === 'default' ? (
+        <OrbitControls 
+          enableZoom={true}
+          enablePan={true}
+          enableRotate={true}
+          minDistance={2}
+          maxDistance={10}
+        />
+      ) : (
+        <PointerLockControls />
+      )}
     </>
   );
 };
 
 export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
+  const [viewMode, setViewMode] = useState<ViewMode>('default');
+
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'default' ? 'inside' : 'default');
+  };
+
   return (
     <div className="glass-panel rounded-2xl p-6 h-full relative overflow-hidden">
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">3D Sound Localization</h2>
-        <p className="text-sm text-muted-foreground">
-          Interactive sphere showing sound source direction and type
-        </p>
+      <div className="mb-4 flex justify-between items-start">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">3D Sound Localization</h2>
+          <p className="text-sm text-muted-foreground">
+            {viewMode === 'default' 
+              ? 'Interactive sphere showing sound source direction and type'
+              : 'Immersive view from inside the sphere - look around to locate sounds'
+            }
+          </p>
+        </div>
+        
+        {/* View mode toggle button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleViewMode}
+          className="flex items-center gap-2 text-xs"
+          title={viewMode === 'default' 
+            ? 'Switch to immersive sound-source view from inside the sphere'
+            : 'Return to external sphere view'
+          }
+        >
+          {viewMode === 'default' ? (
+            <>
+              <Eye className="w-3 h-3" />
+              POV Mode
+            </>
+          ) : (
+            <>
+              <Navigation className="w-3 h-3" />
+              Explore Sphere
+            </>
+          )}
+        </Button>
       </div>
       
       {isLoading && (
@@ -125,8 +176,13 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
       )}
       
       <div className="h-[calc(100%-80px)] rounded-xl overflow-hidden">
-        <Canvas camera={{ position: [5, 2, 5], fov: 60 }}>
-          <Scene results={results} />
+        <Canvas 
+          camera={{ 
+            position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
+            fov: 60 
+          }}
+        >
+          <Scene results={results} viewMode={viewMode} />
         </Canvas>
       </div>
       

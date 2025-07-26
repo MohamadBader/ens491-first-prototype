@@ -8,15 +8,21 @@ interface SoundMarkerProps {
   position: [number, number, number];
   soundType: string;
   confidence: number;
+  viewMode?: 'default' | 'inside';
 }
 
-export const SoundMarker = ({ position, soundType, confidence }: SoundMarkerProps) => {
+export const SoundMarker = ({ position, soundType, confidence, viewMode = 'default' }: SoundMarkerProps) => {
   const markerRef = useRef<Mesh>(null);
   const iconData = getSoundIcon(soundType);
   
   useFrame((state) => {
     if (markerRef.current) {
       markerRef.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.1;
+      
+      // In inside mode, make marker face center (0,0,0)
+      if (viewMode === 'inside') {
+        markerRef.current.lookAt(0, 0, 0);
+      }
     }
   });
 
@@ -46,10 +52,12 @@ export const SoundMarker = ({ position, soundType, confidence }: SoundMarkerProp
       
       {/* HTML overlay for icon and info */}
       <Html
-        position={[0, 0.3, 0]}
+        position={viewMode === 'inside' ? [0, -0.3, 0] : [0, 0.3, 0]}
         center
-        distanceFactor={8}
+        distanceFactor={viewMode === 'inside' ? 4 : 8}
         className="pointer-events-none"
+        transform={viewMode === 'inside'}
+        sprite={viewMode === 'inside'}
       >
         <div className="glass-panel rounded-lg p-2 text-center min-w-[120px]">
           <div className="text-2xl mb-1">{iconData.icon}</div>
