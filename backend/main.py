@@ -48,13 +48,14 @@ app.add_middleware(
 
 def load_foa_audio(file_path: str):
     """Load FOA audio file"""
+    warning = None
     try:
         audio, sr = librosa.load(file_path, sr=None, mono=False)
         
         # Handle both mono and multi-channel files
         if len(audio.shape) == 1:
-            # Mono file - create mock FOA channels
-            logger.warning("Mono file detected, creating mock FOA channels")
+            warning = "Mono file detected, creating mock FOA channels"
+            logger.warning(warning)
             W = audio
             X = audio * 0.5  # Mock spatial channels
             Y = audio * 0.3
@@ -62,14 +63,15 @@ def load_foa_audio(file_path: str):
         else:
             # Multi-channel file
             if audio.shape[0] < 4:
-                logger.warning(f"Expected 4-channel FOA, got {audio.shape[0]} channels. Padding with zeros.")
+                warning = f"Expected 4-channel FOA, got {audio.shape[0]} channels. Padding with zeros."
+                logger.warning(warning)
                 # Pad with zeros if needed
                 padding = np.zeros((4 - audio.shape[0], audio.shape[1]))
                 audio = np.vstack([audio, padding])
             
             W, X, Y, Z = audio[:4]  # Take first 4 channels
         
-        return W, X, Y, Z, sr
+        return W, X, Y, Z, sr, warning
     except Exception as e:
         logger.error(f"Error loading audio: {e}")
         raise HTTPException(status_code=400, detail=f"Failed to load audio file: {str(e)}")
@@ -157,7 +159,7 @@ async def analyze_audio(audio_file: UploadFile = File(...)):
         logger.info(f"Processing file: {audio_file.filename}")
         
         # Step 1: Load and map FOA channels
-        W, X, Y, Z, sr = load_foa_audio(tmp_file_path)
+        W, X, Y, Z, sr, warning = load_foa_audio(tmp_file_path)
         
         # Step 2: Compute direction
         azimuth, elevation = compute_direction(X, Y, Z)
@@ -183,7 +185,8 @@ async def analyze_audio(audio_file: UploadFile = File(...)):
                 {"label": r["label"], "score": float(r["score"])} 
                 for r in (filtered_results[:10] if filtered_results else [])
             ],
-            "transcription": transcription
+            "transcription": transcription,
+            "warning": warning  # <-- Add warning to response
         }
         
         logger.info("Analysis completed successfully")
