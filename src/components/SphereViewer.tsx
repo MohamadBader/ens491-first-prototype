@@ -3,6 +3,7 @@ import { OrbitControls, Text, Html, PointerLockControls } from '@react-three/dre
 import { motion } from 'framer-motion';
 import { Loader2, Eye, Navigation } from 'lucide-react';
 import { useState } from 'react';
+import * as THREE from 'three';
 import { AudioAnalysisResult } from '@/pages/Index';
 import { SoundMarker } from './SoundMarker';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           transparent 
           opacity={viewMode === 'inside' ? 0.05 : 0.1} 
           wireframe={false}
-          side={viewMode === 'inside' ? 2 : 0} // DoubleSide when inside
+          side={viewMode === 'inside' ? THREE.DoubleSide : THREE.FrontSide}
         />
       </mesh>
       
@@ -53,7 +54,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           transparent 
           opacity={viewMode === 'inside' ? 0.1 : 0.2} 
           wireframe={true}
-          side={viewMode === 'inside' ? 2 : 0} // DoubleSide when inside
+          side={viewMode === 'inside' ? THREE.DoubleSide : THREE.FrontSide}
         />
       </mesh>
       
