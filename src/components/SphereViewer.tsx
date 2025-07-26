@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Text, Html, PointerLockControls } from '@react-three/drei';
+import { OrbitControls, Text, Html } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import { Loader2, Eye, Navigation } from 'lucide-react';
 import { useState } from 'react';
@@ -111,7 +111,14 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           maxDistance={10}
         />
       ) : (
-        <PointerLockControls />
+        <OrbitControls 
+          enableZoom={false}
+          enablePan={false}
+          enableRotate={true}
+          target={[0, 0, 0]}
+          minDistance={0.1}
+          maxDistance={0.1}
+        />
       )}
     </>
   );
