@@ -9,12 +9,33 @@ import tempfile
 import os
 from typing import List, Dict, Any
 import logging
+from contextlib import asynccontextmanager
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Audio Analysis API", version="1.0.0")
+# Global variables for models (loaded once)
+audio_classifier = None
+speech_recognizer = None
+
+def load_models():
+    global audio_classifier, speech_recognizer
+    try:
+        logger.info("Loading audio classification model...")
+        audio_classifier = pipeline("audio-classification", model="MIT/ast-finetuned-audioset-10-10-0.4593")
+        logger.info("Loading speech recognition model...")
+        speech_recognizer = pipeline("automatic-speech-recognition", model="openai/whisper-base.en")
+        logger.info("Models loaded successfully!")
+    except Exception as e:
+        logger.error(f"Failed to load models: {e}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_models()
+    yield
+
+app = FastAPI(title="Audio Analysis API", version="1.0.0", lifespan=lifespan)
 
 # Add CORS middleware
 app.add_middleware(
@@ -24,28 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Global variables for models (loaded once)
-audio_classifier = None
-speech_recognizer = None
-
-def load_models():
-    """Load ML models on startup"""
-    global audio_classifier, speech_recognizer
-    try:
-        logger.info("Loading audio classification model...")
-        audio_classifier = pipeline("audio-classification", model="MIT/ast-finetuned-audioset-10-10-0.4593")
-        
-        logger.info("Loading speech recognition model...")
-        speech_recognizer = pipeline("automatic-speech-recognition", model="openai/whisper-base.en")
-        
-        logger.info("Models loaded successfully!")
-    except Exception as e:
-        logger.error(f"Failed to load models: {e}")
-
-@app.on_event("startup")
-async def startup_event():
-    load_models()
 
 def load_foa_audio(file_path: str):
     """Load FOA audio file"""
@@ -116,7 +115,7 @@ def classify_audio(file_path: str, threshold: float = 0.1):
         
         return results, filtered
     except Exception as e:
-        logger.error(f"Error classifying audio: {e}")
+        logger.error(f"Error classifying audio: {e}", exc_info=True)  # <-- Add exc_info for traceback
         # Return fallback results
         return [], []
 
