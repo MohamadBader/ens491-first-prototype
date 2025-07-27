@@ -35,7 +35,7 @@ const mapResponseToResult = (response: AudioAnalysisResponse, filename: string):
 export class AudioAnalysisApi {
   private baseUrl: string;
 
-  constructor(baseUrl: string = import.meta.env.VITE_API_URL || 'http://localhost:8000') {
+  constructor(baseUrl: string = import.meta.env.VITE_API_URL || '/api') {
     this.baseUrl = baseUrl;
   }
 
