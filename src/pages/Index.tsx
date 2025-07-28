@@ -85,13 +85,31 @@ const Index = () => {
       
     } catch (error) {
       console.error('Analysis failed:', error);
+      
+      // Fallback to mock data on any error
       toast({
-        title: "Analysis failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred.",
+        title: "Backend not available",
+        description: "Using demo data. Deploy your Python backend to process real files.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      
+      const mockResult: AudioAnalysisResult = {
+        azimuth: 269.65,
+        elevation: 4.18,
+        classification: [
+          { label: "Chicken, rooster", score: 0.691 },
+          { label: "Fowl", score: 0.145 },
+          { label: "Cluck", score: 0.111 },
+        ],
+        transcript: null,
+        filename: file.name
+      };
+      
+      setTimeout(() => {
+        setResults(mockResult);
+        setIsLoading(false);
+      }, 2000);
+      return;
     }
   };
 

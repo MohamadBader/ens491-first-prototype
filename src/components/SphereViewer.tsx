@@ -195,6 +195,15 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
             position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
             fov: 60 
           }}
+          gl={{ 
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
+          dpr={Math.min(window.devicePixelRatio, 2)}
+          onCreated={({ gl }) => {
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+          }}
         >
           <Scene results={results} viewMode={viewMode} />
         </Canvas>
