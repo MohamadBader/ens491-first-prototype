@@ -66,6 +66,7 @@ const Index = () => {
       // Use real API
       const result = await audioAnalysisApi.analyzeAudio(file);
       setResults(result);
+      setIsLoading(false);
       
       // Show warning toast if present
       if (result.warning) {
