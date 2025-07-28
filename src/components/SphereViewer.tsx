@@ -106,10 +106,17 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
         <OrbitControls 
           key="orbit-default"
           enableZoom={true}
-          enablePan={true}
+          enablePan={false}
           enableRotate={true}
           minDistance={2}
           maxDistance={10}
+          rotateSpeed={0.5}
+          enableDamping={true}
+          dampingFactor={0.05}
+          touches={{
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN
+          }}
         />
       ) : (
         <OrbitControls 
@@ -120,9 +127,13 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           target={[0, 0, 0]}
           minDistance={0.01}
           maxDistance={0.01}
-          rotateSpeed={0.3}
+          rotateSpeed={0.5}
           enableDamping={true}
-          dampingFactor={0.1}
+          dampingFactor={0.05}
+          touches={{
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.ROTATE
+          }}
         />
       )}
     </>
@@ -188,7 +199,7 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
         </motion.div>
       )}
       
-      <div className="h-[calc(100%-80px)] rounded-xl overflow-hidden">
+      <div className="h-[calc(100%-80px)] rounded-xl overflow-hidden touch-none">
         <Canvas 
           key={viewMode}
           camera={{ 
@@ -196,13 +207,20 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
             fov: 60 
           }}
           gl={{ 
-            antialias: true,
+            antialias: false,
             alpha: true,
-            powerPreference: "high-performance"
+            powerPreference: "default",
+            precision: "mediump"
           }}
-          dpr={Math.min(window.devicePixelRatio, 2)}
+          dpr={1}
+          style={{ 
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none'
+          }}
           onCreated={({ gl }) => {
             gl.outputColorSpace = THREE.SRGBColorSpace;
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
           }}
         >
           <Scene results={results} viewMode={viewMode} />
