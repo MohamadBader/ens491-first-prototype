@@ -110,12 +110,17 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           enableRotate={true}
           minDistance={2}
           maxDistance={10}
-          rotateSpeed={0.5}
+          rotateSpeed={0.8}
           enableDamping={true}
-          dampingFactor={0.05}
+          dampingFactor={0.1}
           touches={{
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.DOLLY_PAN
+          }}
+          mouseButtons={{
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN
           }}
         />
       ) : (
@@ -127,12 +132,17 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
           target={[0, 0, 0]}
           minDistance={0.01}
           maxDistance={0.01}
-          rotateSpeed={0.5}
+          rotateSpeed={0.8}
           enableDamping={true}
-          dampingFactor={0.05}
+          dampingFactor={0.1}
           touches={{
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.ROTATE
+          }}
+          mouseButtons={{
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.ROTATE,
+            RIGHT: THREE.MOUSE.ROTATE
           }}
         />
       )}
@@ -148,11 +158,11 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-6 h-full relative overflow-hidden">
-      <div className="mb-4 flex justify-between items-start">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">3D Sound Localization</h2>
-          <p className="text-sm text-muted-foreground">
+    <div className="glass-panel rounded-2xl p-3 md:p-6 h-full relative">
+      <div className="mb-3 md:mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+        <div className="flex-1">
+          <h2 className="text-lg md:text-xl font-semibold mb-2">3D Sound Localization</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">
             {viewMode === 'default' 
               ? 'Interactive sphere showing sound source direction and type'
               : 'Immersive view from inside the sphere - look around to locate sounds'
@@ -165,7 +175,7 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
           variant="outline"
           size="sm"
           onClick={toggleViewMode}
-          className="flex items-center gap-2 text-xs"
+          className="flex items-center gap-2 text-xs flex-shrink-0"
           title={viewMode === 'default' 
             ? 'Switch to immersive sound-source view from inside the sphere'
             : 'Return to external sphere view'
@@ -199,37 +209,60 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
         </motion.div>
       )}
       
-      <div className="h-[calc(100%-80px)] rounded-xl overflow-hidden touch-none">
-        <Canvas 
-          key={viewMode}
-          camera={{ 
-            position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
-            fov: 60 
-          }}
-          gl={{ 
-            antialias: false,
-            alpha: true,
-            powerPreference: "default",
-            precision: "mediump"
-          }}
-          dpr={1}
+      <div 
+        className="h-[calc(100%-60px)] md:h-[calc(100%-80px)] w-full rounded-xl relative"
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        <div 
+          className="w-full h-full"
           style={{ 
             touchAction: 'none',
             userSelect: 'none',
-            WebkitUserSelect: 'none'
+            WebkitUserSelect: 'none',
+            position: 'relative'
           }}
-          onCreated={({ gl }) => {
-            gl.outputColorSpace = THREE.SRGBColorSpace;
-            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          onTouchStart={(e) => {
+            // Prevent page scrolling when touching the 3D area
+            e.preventDefault();
           }}
         >
-          <Scene results={results} viewMode={viewMode} />
-        </Canvas>
+          <Canvas 
+            key={viewMode}
+            camera={{ 
+              position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
+              fov: 60,
+              aspect: 1
+            }}
+            gl={{ 
+              antialias: false,
+              alpha: true,
+              powerPreference: "default",
+              precision: "mediump"
+            }}
+            dpr={1}
+            style={{ 
+              width: '100%',
+              height: '100%',
+              display: 'block'
+            }}
+            onCreated={({ gl, size }) => {
+              gl.outputColorSpace = THREE.SRGBColorSpace;
+              gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+              gl.setSize(size.width, size.height);
+            }}
+            resize={{ scroll: false, debounce: { scroll: 50, resize: 50 } }}
+          >
+            <Scene results={results} viewMode={viewMode} />
+          </Canvas>
+        </div>
       </div>
       
       {results && (
-        <div className="absolute bottom-8 left-8 glass-panel rounded-lg p-3">
-          <div className="text-sm">
+        <div className="absolute bottom-4 md:bottom-8 left-4 md:left-8 glass-panel rounded-lg p-2 md:p-3 max-w-[calc(100%-2rem)]">
+          <div className="text-xs md:text-sm">
             <div className="font-medium text-accent">Sound Location</div>
             <div className="text-muted-foreground">
               Azimuth: {results.azimuth.toFixed(1)}° | Elevation: {results.elevation.toFixed(1)}°
