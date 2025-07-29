@@ -28,6 +28,10 @@ const azimuthElevationToCartesian = (azimuth: number, elevation: number, radius:
 };
 
 const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; viewMode: ViewMode }) => {
+  // Scale sphere based on screen size - smaller on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const sphereRadius = isMobile ? 2 : 3;
+  
   return (
     <>
       {/* Ambient lighting */}
@@ -36,7 +40,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
       
       {/* Main transparent sphere */}
       <mesh>
-        <sphereGeometry args={[3, 64, 64]} />
+        <sphereGeometry args={[sphereRadius, 64, 64]} />
         <meshPhongMaterial 
           color="#8b5cf6" 
           transparent 
@@ -48,7 +52,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
       
       {/* Wireframe sphere for reference */}
       <mesh>
-        <sphereGeometry args={[3, 32, 32]} />
+        <sphereGeometry args={[sphereRadius, 32, 32]} />
         <meshBasicMaterial 
           color="#8b5cf6" 
           transparent 
@@ -61,7 +65,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
       {/* Sound source marker */}
       {results && (
         <SoundMarker
-          position={azimuthElevationToCartesian(results.azimuth, results.elevation)}
+          position={azimuthElevationToCartesian(results.azimuth, results.elevation, sphereRadius)}
           soundType={results.classification[0]?.label || 'Unknown'}
           confidence={results.classification[0]?.score || 0}
           viewMode={viewMode}
@@ -72,7 +76,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
       {viewMode === 'default' && (
         <>
           <Text
-            position={[4, 0, 0]}
+            position={[sphereRadius + 1, 0, 0]}
             fontSize={0.3}
             color="#10b981"
             anchorX="center"
@@ -81,7 +85,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
             +X (East)
           </Text>
           <Text
-            position={[0, 4, 0]}
+            position={[0, sphereRadius + 1, 0]}
             fontSize={0.3}
             color="#10b981"
             anchorX="center"
@@ -90,7 +94,7 @@ const Scene = ({ results, viewMode }: { results: AudioAnalysisResult | null; vie
             +Y (Up)
           </Text>
           <Text
-            position={[0, 0, 4]}
+            position={[0, 0, sphereRadius + 1]}
             fontSize={0.3}
             color="#10b981"
             anchorX="center"
@@ -158,7 +162,7 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-3 md:p-6 h-full relative">
+    <div className="glass-panel rounded-2xl p-3 md:p-6 h-full relative overflow-hidden">
       <div className="mb-3 md:mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div className="flex-1">
           <h2 className="text-lg md:text-xl font-semibold mb-2">3D Sound Localization</h2>
@@ -209,55 +213,32 @@ export const SphereViewer = ({ results, isLoading }: SphereViewerProps) => {
         </motion.div>
       )}
       
-      <div 
-        className="h-[calc(100%-60px)] md:h-[calc(100%-80px)] w-full rounded-xl relative"
-        style={{ 
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        <div 
-          className="w-full h-full"
+      <div className="h-[calc(100%-60px)] md:h-[calc(100%-80px)] rounded-xl overflow-hidden">
+        <Canvas 
+          key={viewMode}
+          camera={{ 
+            position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
+            fov: 60 
+          }}
+          gl={{ 
+            antialias: false,
+            alpha: true,
+            powerPreference: "default",
+            precision: "mediump"
+          }}
+          dpr={1}
           style={{ 
             touchAction: 'none',
             userSelect: 'none',
-            WebkitUserSelect: 'none',
-            position: 'relative'
+            WebkitUserSelect: 'none'
           }}
-          onTouchStart={(e) => {
-            // Prevent page scrolling when touching the 3D area
-            e.preventDefault();
+          onCreated={({ gl }) => {
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
           }}
         >
-          <Canvas 
-            key={viewMode}
-            camera={{ 
-              position: viewMode === 'default' ? [5, 2, 5] : [0, 0, 0], 
-              fov: 60,
-              aspect: 1
-            }}
-            gl={{ 
-              antialias: false,
-              alpha: true,
-              powerPreference: "default",
-              precision: "mediump"
-            }}
-            dpr={1}
-            style={{ 
-              width: '100%',
-              height: '100%',
-              display: 'block'
-            }}
-            onCreated={({ gl, size }) => {
-              gl.outputColorSpace = THREE.SRGBColorSpace;
-              gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-              gl.setSize(size.width, size.height);
-            }}
-            resize={{ scroll: false, debounce: { scroll: 50, resize: 50 } }}
-          >
-            <Scene results={results} viewMode={viewMode} />
-          </Canvas>
-        </div>
+          <Scene results={results} viewMode={viewMode} />
+        </Canvas>
       </div>
       
       {results && (
