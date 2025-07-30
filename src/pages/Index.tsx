@@ -130,7 +130,7 @@ const Index = () => {
           className="text-center mb-8"
         >
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-            Audio Analysis & 3D Localization
+            ENS491-Prototype (Audio Analysis & 3D Localization)
           </h1>
           <p className="text-muted-foreground text-lg">
             Upload audio files to visualize sound classification and spatial localization
