@@ -1,73 +1,188 @@
-# Welcome to your Lovable project
+# ENS491 Project Prototype - Audio Analysis & 3D Localization
 
-## Project info
+A web application for analyzing audio files with spatial sound localization and classification capabilities. This project processes First-Order Ambisonics (FOA) audio files to determine sound direction, classify audio content, and provide speech transcription.
 
-**URL**: https://lovable.dev/projects/22676428-acaf-435d-96b2-d98263d6b868
+## Features
 
-## How can I edit this code?
+- **3D Audio Visualization**: Interactive sphere visualization showing sound source localization
+- **Spatial Audio Analysis**: Computes azimuth and elevation from FOA channels
+- **Sound Classification**: Uses MIT's AudioSet model for automatic sound classification
+- **Speech Transcription**: Automatic speech recognition using OpenAI Whisper
+- **Real-time Processing**: Fast audio analysis with visual feedback
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
 
-There are several ways of editing your application.
+## Technology Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Framework**: shadcn/ui components with Tailwind CSS
+- **3D Graphics**: Three.js with React Three Fiber
+- **Backend**: Python FastAPI with audio processing libraries
+- **Deployment**: Docker & Docker Compose
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/22676428-acaf-435d-96b2-d98263d6b868) and start prompting.
+## Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js 18+ and npm
+- Python 3.8+ (for backend)
+- Docker and Docker Compose (optional, for containerized deployment)
 
-**Use your preferred IDE**
+## Quick Start
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Option 1: Docker Compose (Recommended)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd <project-directory>
+   ```
 
-Follow these steps:
+2. **Run with Docker Compose:**
+   ```bash
+   docker-compose up --build
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Access the application:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Option 2: Local Development
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd <project-directory>
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+2. **Install frontend dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up the backend:**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
+
+4. **Start the backend server:**
+   ```bash
+   cd backend
+   python main.py
+   ```
+
+5. **Start the frontend development server:**
+   ```bash
+   npm run dev
+   ```
+
+6. **Access the application:**
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:8000
+
+## Project Structure
+
+```
+├── src/                    # Frontend source code
+│   ├── components/         # React components
+│   ├── pages/             # Page components
+│   ├── services/          # API services
+│   └── utils/             # Utility functions
+├── backend/               # Python backend
+│   ├── main.py           # FastAPI application
+│   ├── requirements.txt  # Python dependencies
+│   └── Dockerfile        # Backend container config
+├── docker-compose.yml    # Multi-container setup
+└── README.md            # Project documentation
 ```
 
-**Edit a file directly in GitHub**
+## API Endpoints
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### `GET /health`
+Health check endpoint
 
-**Use GitHub Codespaces**
+### `POST /analyze-audio`
+Analyze uploaded audio file
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Request:**
+- Method: POST
+- Content-Type: multipart/form-data
+- Body: `audio_file` (file upload)
 
-## What technologies are used for this project?
+**Response:**
+```json
+{
+  "azimuth": 269.65,
+  "elevation": 4.18,
+  "delay_samples": 10770,
+  "delay_seconds": 0.11219,
+  "classification": [
+    {"label": "Chicken, rooster", "score": 0.691},
+    {"label": "Fowl", "score": 0.145}
+  ],
+  "transcription": "Hello world"
+}
+```
 
-This project is built with:
+## Supported Audio Formats
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- WAV (.wav)
+- MP3 (.mp3)
+- FLAC (.flac)
+- OGG (.ogg)
 
-## How can I deploy this project?
+Supports both mono and multi-channel audio files.
 
-Simply open [Lovable](https://lovable.dev/projects/22676428-acaf-435d-96b2-d98263d6b868) and click on Share -> Publish.
+## Development Commands
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+# Frontend development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
 
-Yes, you can!
+# Docker commands
+docker-compose up --build    # Build and run all services
+docker-compose down         # Stop all services
+docker-compose logs        # View logs
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Local Production Build
+
+```bash
+# Build frontend
+npm run build
+
+# Serve with a static file server
+npx serve dist
+```
+
+### Docker Deployment
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build -d
+
+# Or build individual containers
+docker build -t audio-frontend .
+docker build -t audio-backend ./backend
+```
+
+## Troubleshooting
+
+- **Port conflicts**: Ensure ports 3000 (frontend) and 8000 (backend) are available
+- **Backend startup**: First request may be slow due to model loading
+- **Audio processing**: Large files may take longer to process
+- **CORS issues**: Backend includes CORS middleware for cross-origin requests
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is part of the ENS491 course prototype development.
